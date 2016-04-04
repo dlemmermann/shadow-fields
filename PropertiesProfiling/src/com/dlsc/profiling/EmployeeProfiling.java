@@ -67,25 +67,26 @@ public class EmployeeProfiling extends Application {
 		durationAColumn.setPrefWidth(110);
 		tableView.getColumns().add(durationAColumn);
 
+		TableColumn<TestResult, Long> memoryStandard = new TableColumn<>("Mem Standard");
+		memoryStandard.setCellValueFactory(new PropertyValueFactory<>("niceMemoryStandard"));
+		memoryStandard.setPrefWidth(110);
+		tableView.getColumns().add(memoryStandard);
+
 		TableColumn<TestResult, Long> durationBColumn = new TableColumn<>("Time Accessor");
 		durationBColumn.setCellValueFactory(new PropertyValueFactory<>("durationPropertyAccessor"));
 		durationBColumn.setPrefWidth(110);
 		tableView.getColumns().add(durationBColumn);
+
+		TableColumn<TestResult, Long> memoryAccessor = new TableColumn<>("Mem Accessor");
+		memoryAccessor.setCellValueFactory(new PropertyValueFactory<>("niceMemoryPropertyAccessor"));
+		memoryAccessor.setPrefWidth(110);
+		tableView.getColumns().add(memoryAccessor);
 
 		TableColumn<TestResult, Long> memoryAColumn = new TableColumn<>("Time Shadow");
 		memoryAColumn.setCellValueFactory(new PropertyValueFactory<>("durationShadowFields"));
 		memoryAColumn.setPrefWidth(110);
 		tableView.getColumns().add(memoryAColumn);
 
-		TableColumn<TestResult, Long> memoryStandard = new TableColumn<>("Mem Standard");
-		memoryStandard.setCellValueFactory(new PropertyValueFactory<>("niceMemoryStandard"));
-		memoryStandard.setPrefWidth(110);
-		tableView.getColumns().add(memoryStandard);
-
-		TableColumn<TestResult, Long> memoryAccessor = new TableColumn<>("Mem Accessor");
-		memoryAccessor.setCellValueFactory(new PropertyValueFactory<>("niceMemoryPropertyAccessor"));
-		memoryAccessor.setPrefWidth(110);
-		tableView.getColumns().add(memoryAccessor);
 
 		TableColumn<TestResult, Long> memoryShadow = new TableColumn<>("Mem Shadow");
 		memoryShadow.setCellValueFactory(new PropertyValueFactory<>("niceMemoryShadowFields"));
