@@ -1,88 +1,73 @@
 package com.dlsc.profiling;
 
-
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-/**
- * A hybrid domain and model object using the shadow field pattern to save memory.
- * Created by cpdea
- */
-public class Employee implements PropertyAccessors{
+public class Employee {
 
-    /** This is a map to hold properties and observables */
-    private Map<String, Object> modelProperties;
+	public Employee(String name, String powers) {
+		setName(name);
+		setPowers(powers);
+	}
 
-    public static final String NAME_PROPERTY = "name";
-    public static final String POWERS_PROPERTY = "powers";
-    public static final String SUPERVISOR_PROPERTY = "supervisor";
-    public static final String MINIONS_PROPERTY = "minions";
+	private StringProperty name = new SimpleStringProperty(this, "name");
 
-    public Employee(String name, String powers) {
-        setName(name);
-        setPowers(powers);
-    }
+	public final String getName() {
+		return name.get();
+	}
 
-    @Override
-    public Map<String, Object> getModelProperties() {
-        if (modelProperties == null) {
-            modelProperties = new HashMap<>();
-        }
-        return modelProperties;
-    }
+	public final void setName(String name) {
+		this.name.set(name);
+	}
 
-    public final String getName() {
-        return getValue(NAME_PROPERTY, "");
-    }
-    public final void setName(String name) {
-        setValue(NAME_PROPERTY, name);
-    }
-    public final StringProperty nameProperty() {
-        return refProperty(NAME_PROPERTY, SimpleStringProperty.class, String.class);
-    }
+	public final StringProperty nameProperty() {
+		return name;
+	}
 
-    public String getPowers() {
-        return getValue(POWERS_PROPERTY, "");
-    }
+	private StringProperty powers = new SimpleStringProperty(this, "powers");
 
-    public final StringProperty powersProperty() {
-        return refProperty(POWERS_PROPERTY, SimpleStringProperty.class, String.class);
-    }
+	public String getPowers() {
+		return powers.get();
+	}
 
-    public final void setPowers(String powers) {
-        setValue(POWERS_PROPERTY, powers);
-    }
+	public final StringProperty powersProperty() {
+		return powers;
+	}
 
-    public final Employee getSupervisor() {
-        return getValue(SUPERVISOR_PROPERTY, null);
-    }
+	public final void setPowers(String powers) {
+		this.powers.set(powers);
+	}
 
-    public final ObjectProperty<Employee> supervisorProperty() {
-        return refProperty(SUPERVISOR_PROPERTY, SimpleObjectProperty.class, Employee.class);
-    }
+	private ObjectProperty<Employee> supervisor = new SimpleObjectProperty<>(this, "supervisor");
 
-    public final void setSupervisor(Employee supervisor) {
-        setValue(SUPERVISOR_PROPERTY, supervisor);
-    }
+	public final Employee getSupervisor() {
+		return supervisor.get();
+	}
 
-    public final List<Employee> getMinions() {
-        return getValues(MINIONS_PROPERTY, new ArrayList<>());
-    }
+	public final ObjectProperty<Employee> supervisorProperty() {
+		return supervisor;
+	}
 
-    public final ObservableList<Employee> minionsObservables() {
-        return refObservables(MINIONS_PROPERTY);
-    }
+	public final void setSupervisor(Employee supervisor) {
+		this.supervisor.set(supervisor);
+	}
 
-    public final void setMinions(List<Employee> minions) {
-        setValues(MINIONS_PROPERTY, minions);
-    }
+	private ObservableList<Employee> minions;
 
+	public final ObservableList<Employee> getMinions() {
+		if (minions == null) {
+			minions  = FXCollections.observableArrayList();
+		}
+		return minions;
+	}
+
+	public final void setMinions(List<Employee> minions) {
+		getMinions().setAll(minions);
+	}
 }
