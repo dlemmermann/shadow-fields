@@ -1,16 +1,14 @@
 package com.dlsc.profiling;
 
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A hybrid domain and model object using the shadow field pattern to save memory.
@@ -19,7 +17,7 @@ import javafx.collections.ObservableList;
 public class EmployeePropertyAccessor implements PropertyAccessors{
 
     /** This is a map to hold properties and observables */
-    private Map<String, Object> modelProperties;
+
 
     public static final String NAME_PROPERTY = "name";
     public static final String POWERS_PROPERTY = "powers";
@@ -31,13 +29,6 @@ public class EmployeePropertyAccessor implements PropertyAccessors{
         setPowers(powers);
     }
 
-    @Override
-    public Map<String, Object> getModelProperties() {
-        if (modelProperties == null) {
-            modelProperties = new HashMap<>();
-        }
-        return modelProperties;
-    }
 
     public final String getName() {
         return getValue(NAME_PROPERTY, "");

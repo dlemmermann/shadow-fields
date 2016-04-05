@@ -1,14 +1,15 @@
 package com.dlsc.profiling;
 
 
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import javafx.beans.property.Property;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Provide default methods to support the similar
@@ -24,25 +25,31 @@ import javafx.collections.ObservableList;
  */
 public interface PropertyAccessors {
 
-    Map<String, Object> getModelProperties();
+    Map<Integer, Object> modelProperties = new HashMap<>();
+    default Map<Integer, Object> getModelProperties() {
+        return modelProperties;
+    }
 
     default <T> T getValue(String name, Object defaultVal) {
-        Object p = getModelProperties().get(name);
+        int id = (this.hashCode() + name).hashCode();
+        Object p = getModelProperties().get(id);
         p = p==null ? defaultVal : p;
         return (T) ((p instanceof Property) ? ((Property) p).getValue(): p);
     }
 
     default void setValue(String name, Object value) {
-        Object p = getModelProperties().get(name);
+        int id = (this.hashCode() + name).hashCode();
+        Object p = getModelProperties().get(id);
         if (p instanceof Property) {
             ((Property)p).setValue(value);
         } else {
-            getModelProperties().put(name, value);
+            getModelProperties().put(id, value);
         }
     }
 
     default <T> T refProperty(String name, Class propClass, Class rawValType) {
-        Object p = getModelProperties().get(name);
+        int id = (this.hashCode() + name).hashCode();
+        Object p = getModelProperties().get(id);
         Property prop = null;
 
         try {
@@ -62,7 +69,7 @@ public interface PropertyAccessors {
             } else {
                 prop = (Property) p;
             }
-            getModelProperties().put(name, prop);
+            getModelProperties().put(id, prop);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -70,19 +77,22 @@ public interface PropertyAccessors {
     }
 
     default <T> List<T> getValues(String name, List<T> defaultValue) {
-        Object p, o = getModelProperties().get(name);
+        int id = (this.hashCode() + name).hashCode();
+        Object p, o = getModelProperties().get(id);
         p = o;
         o = o==null ? defaultValue : o;
         if (!o.equals(p)) {
-            getModelProperties().put(name, o);
+            getModelProperties().put(id, o);
         }
         return  (List<T>) o;
     }
 
     default <T> void setValues(String name, List<T> newList) {
-        Object list = getModelProperties().get(name);
+
+        int id = (this.hashCode() + name).hashCode();
+        Object list = getModelProperties().get(id);
         if (list == null || !(list instanceof ObservableList)) {
-            getModelProperties().put(name, newList);
+            getModelProperties().put(id, newList);
         } else {
             // Should the list be totally replaced? below clears and adds all items
             ObservableList<T> observableList = (ObservableList<T>) list;
@@ -92,16 +102,17 @@ public interface PropertyAccessors {
     }
 
     default <T> ObservableList<T> refObservables(String name) {
-        List list = (List) getModelProperties().get(name);
+        int id = (this.hashCode() + name).hashCode();
+        List list = (List) getModelProperties().get(id);
 
         if (list == null) {
             list = FXCollections.observableArrayList(getValues(name, new ArrayList<>()));
-            getModelProperties().put(name, list);
+            getModelProperties().put(id, list);
         }
 
         if (! (list instanceof ObservableList)) {
             list = FXCollections.observableArrayList(list);
-            getModelProperties().put(name, list);
+            getModelProperties().put(id, list);
         }
 
         return (ObservableList<T>) list;
