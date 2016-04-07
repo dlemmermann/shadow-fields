@@ -7,9 +7,7 @@ import javafx.collections.ObservableList;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Provide default methods to support the similar
@@ -25,31 +23,25 @@ import java.util.Map;
  */
 public interface PropertyAccessors {
 
-    Map<Integer, Object> modelProperties = new HashMap<>();
-    default Map<Integer, Object> getModelProperties() {
-        return modelProperties;
-    }
+    Object[] getModelProperties();
 
-    default <T> T getValue(String name, Object defaultVal) {
-        int id = (this.hashCode() + name).hashCode();
-        Object p = getModelProperties().get(id);
+    default <T> T getValue(Enum name, Object defaultVal) {
+        Object p = getModelProperties()[name.ordinal()];
         p = p==null ? defaultVal : p;
         return (T) ((p instanceof Property) ? ((Property) p).getValue(): p);
     }
 
-    default void setValue(String name, Object value) {
-        int id = (this.hashCode() + name).hashCode();
-        Object p = getModelProperties().get(id);
+    default void setValue(Enum name, Object value) {
+        Object p = getModelProperties()[name.ordinal()];
         if (p instanceof Property) {
             ((Property)p).setValue(value);
         } else {
-            getModelProperties().put(id, value);
+            getModelProperties()[name.ordinal()] = value;
         }
     }
 
-    default <T> T refProperty(String name, Class propClass, Class rawValType) {
-        int id = (this.hashCode() + name).hashCode();
-        Object p = getModelProperties().get(id);
+    default <T> T refProperty(Enum name, Class propClass, Class rawValType) {
+        Object p = getModelProperties()[name.ordinal()];
         Property prop = null;
 
         try {
@@ -59,40 +51,38 @@ public interface PropertyAccessors {
                         new Class[]{Object.class, String.class};
                 Constructor<Property> propConstr =
                         propClass.getDeclaredConstructor(constructorTypes);
-                prop = propConstr.newInstance(this, name);
+                prop = propConstr.newInstance(this, name.toString());
             } else if (rawValType.isInstance(p)) {
                 Class[] constructorTypes = new Class[]{Object.class,
                         String.class, rawValType};
                 Constructor<Property> propConstr =
                         propClass.getDeclaredConstructor(constructorTypes);
-                prop = propConstr.newInstance(this, name, p);
+                prop = propConstr.newInstance(this, name.toString(), p);
             } else {
                 prop = (Property) p;
             }
-            getModelProperties().put(id, prop);
+            getModelProperties()[name.ordinal()] = prop;
         } catch (Exception e) {
             e.printStackTrace();
         }
         return (T) prop;
     }
 
-    default <T> List<T> getValues(String name, List<T> defaultValue) {
-        int id = (this.hashCode() + name).hashCode();
-        Object p, o = getModelProperties().get(id);
+    default <T> List<T> getValues(Enum name, List<T> defaultValue) {
+        Object p, o = getModelProperties()[name.ordinal()];
         p = o;
         o = o==null ? defaultValue : o;
         if (!o.equals(p)) {
-            getModelProperties().put(id, o);
+            getModelProperties()[name.ordinal()] = o;
         }
         return  (List<T>) o;
     }
 
-    default <T> void setValues(String name, List<T> newList) {
+    default <T> void setValues(Enum name, List<T> newList) {
 
-        int id = (this.hashCode() + name).hashCode();
-        Object list = getModelProperties().get(id);
-        if (list == null || !(list instanceof ObservableList)) {
-            getModelProperties().put(id, newList);
+        Object list = getModelProperties()[name.ordinal()];
+        if (list == null || (list instanceof ArrayList)) {
+            getModelProperties()[name.ordinal()] = newList;
         } else {
             // Should the list be totally replaced? below clears and adds all items
             ObservableList<T> observableList = (ObservableList<T>) list;
@@ -101,18 +91,16 @@ public interface PropertyAccessors {
         }
     }
 
-    default <T> ObservableList<T> refObservables(String name) {
-        int id = (this.hashCode() + name).hashCode();
-        List list = (List) getModelProperties().get(id);
+    default <T> ObservableList<T> refObservables(Enum name) {
+
+        List list = (List) getModelProperties()[name.ordinal()];
 
         if (list == null) {
-            list = FXCollections.observableArrayList(getValues(name, new ArrayList<>()));
-            getModelProperties().put(id, list);
-        }
-
-        if (! (list instanceof ObservableList)) {
+            list = FXCollections.observableArrayList();
+            getModelProperties()[name.ordinal()] = list;
+        } else if (! (list instanceof ObservableList)) {
             list = FXCollections.observableArrayList(list);
-            getModelProperties().put(id, list);
+            getModelProperties()[name.ordinal()] = list;
         }
 
         return (ObservableList<T>) list;
