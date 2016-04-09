@@ -9,22 +9,72 @@ import javafx.collections.ObservableList;
 
 import java.util.ArrayList;
 import java.util.List;
+import static com.dlsc.profiling.PropertyAccessors.registerFields;
+
 /**
- * A hybrid domain and model object using the shadow field pattern to save memory.
- * Created by cpdea
+ * A hybrid domain and model object using the PropertyAccessors interface
+ * similar Shadow Fields pattern to save memory. Any fields considered to
+ * be a raw object type or JavaFX Property will declare a private member
+ * as an Object. Next, the developer will declare any enum with entries
+ * named the same as the private member variable names.
+ *
+ * The following example is what a user of the API will need to do:
+ * <pre>
+ *     <code>
+ *        // STEP 1: Implement the interface PropertyAccessors
+ *     public class MyClass implements PropertyAccessors {
+ *
+ *        // STEP 2: Declare your private member (to hold either a native or property type)
+ *        private Object myBrain;
+ *
+ *        // STEP 3: Choose the fields to be considered properties. Name entries to be the same as member variables!
+ *        enum FIELDS {
+ *           myBrain
+ *        }
+ *
+ *        // STEP 4: Register the fields to be shadowed.
+ *        static {
+ *           registerFields(MyClass.class, FIELDS.values());
+ *        }
+ *
+ *        // STEP 5: Use the PropertyAccessor interface API for getters/setters/property methods.
+ *        public final String getMyBrain() {
+ *           return getValue(FIELDS.myBrain, "");
+ *        }
+ *        public final void setMyBrain((String myBrain) {
+ *           setValue(FIELDS.myBrain, myBrain);
+ *        }
+ *        public final StringProperty myBrainProperty() {
+ *           return refProperty(FIELDS.myBrain, SimpleStringProperty.class, String.class);
+ *        }
+ *
+ *        // .. The rest of the class definition
+ *     }
+ *     </code>
+ * </pre>
+ *
+ * Created by Carl Dea
  */
-public class EmployeePropertyAccessor implements PropertyAccessors{
-    public enum FIELDS {
+public class EmployeePropertyAccessor implements PropertyAccessors {
+
+    private Object name;
+    private Object powers;
+    private Object supervisor;
+    private Object minions;
+
+    enum FIELDS {
         name,
         powers,
         supervisor,
         minions
     }
-    private final Object[] modelProperties = new Object[FIELDS.values().length];
 
-    public Object[] getModelProperties(){
-        return modelProperties;
+    static {
+        // register fields one time.
+        // (Warning: enum's ordinal value is reassigned and index number)
+        registerFields(EmployeePropertyAccessor.class, FIELDS.values());
     }
+
     public EmployeePropertyAccessor(String name, String powers) {
         setName(name);
         setPowers(powers);
