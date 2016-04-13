@@ -20,6 +20,7 @@ public class EmployeeProfiling extends Application {
 	final List<Employee> employees = new LinkedList<>();
 	final List<EmployeePropertyAccessor> employeePropertyAccessors = new LinkedList<>();
 	final List<EmployeeShadowFields> employeesShadowFields = new LinkedList<>();
+	final List<EmployeeFXObservable> employeesFXObservable = new LinkedList<>();
 
 	private Button button;
 	private TableView<TestResult> resultsTable;
@@ -93,6 +94,16 @@ public class EmployeeProfiling extends Application {
 		memoryShadow.setPrefWidth(110);
 		tableView.getColumns().add(memoryShadow);
 
+		TableColumn<TestResult, Long> durationFXObservable = new TableColumn<>("Time FXObservable");
+		durationFXObservable.setCellValueFactory(new PropertyValueFactory<>("durationFXObservable"));
+		durationFXObservable.setPrefWidth(110);
+		tableView.getColumns().add(durationFXObservable);
+
+		TableColumn<TestResult, Long> memoryFXObservable = new TableColumn<>("Mem FXObservable");
+		memoryFXObservable.setCellValueFactory(new PropertyValueFactory<>("niceMemoryFXObservable"));
+		memoryFXObservable.setPrefWidth(110);
+		tableView.getColumns().add(memoryFXObservable);
+
 		BorderPane.setMargin(tableView, new Insets(10));
 		return tableView;
 	}
@@ -128,6 +139,9 @@ public class EmployeeProfiling extends Application {
 		clearLists();
 		testShadowFields(count, accessProperties, result);
 
+		clearLists();
+		testFXObservable(count, accessProperties, result);
+
 		return result;
 	}
 
@@ -135,7 +149,32 @@ public class EmployeeProfiling extends Application {
 		employees.clear();
 		employeePropertyAccessors.clear();
 		employeesShadowFields.clear();
+		employeesFXObservable.clear();
 		System.gc();
+	}
+
+	private void testFXObservable(int count, boolean accessProperties, TestResult result) {
+		long usedSpace = getUsedSpace();
+		long time = System.currentTimeMillis();
+
+		for (int i = 0; i < count; i++) {
+			EmployeeFXObservable employee = new EmployeeFXObservable("name", "powers");
+			if (accessProperties) {
+				employee.nameProperty();
+				employee.powersProperty();
+				employee.supervisorProperty();
+				employee.getMinions();
+			}
+			employeesFXObservable.add(employee);
+		}
+
+		result.setDurationFXObservable(System.currentTimeMillis() - time);
+
+		// measure memory
+		System.gc();
+		long diff = getUsedSpace() - usedSpace;
+		result.setMemoryFXObservable(diff);
+		employeesFXObservable.clear();
 	}
 
 	private void testShadowFields(int count, boolean accessProperties, TestResult result) {
@@ -222,10 +261,12 @@ public class EmployeeProfiling extends Application {
 		long durationStandard;
 		long durationPropertyAccessor;
 		long durationShadowFields;
+		long durationFXObservable;
 
 		long memoryStandard;
 		long memoryPropertyAccessor;
 		long memoryShadowFields;
+		long memoryFXObservable;
 
 		public final int getCount() {
 			return count;
@@ -267,6 +308,14 @@ public class EmployeeProfiling extends Application {
 			this.durationShadowFields = duration;
 		}
 
+		public final long getDurationFXObservable() {
+			return durationFXObservable;
+		}
+
+		public final void setDurationFXObservable(long duration) {
+			this.durationFXObservable = duration;
+		}
+
 		public final long getMemoryStandard() {
 			return memoryStandard;
 		}
@@ -291,6 +340,14 @@ public class EmployeeProfiling extends Application {
 			this.memoryShadowFields = memoryShadowFields;
 		}
 
+		public final long getMemoryFXObservable() {
+			return memoryFXObservable;
+		}
+
+		public final void setMemoryFXObservable(long memoryFXObservable) {
+			this.memoryFXObservable = memoryFXObservable;
+		}
+
 		public final String getNiceMemoryStandard() {
 			return humanReadableByteCount(getMemoryStandard(), true);
 		}
@@ -301,6 +358,10 @@ public class EmployeeProfiling extends Application {
 
 		public final String getNiceMemoryShadowFields() {
 			return humanReadableByteCount(getMemoryShadowFields(), true);
+		}
+
+		public final String getNiceMemoryFXObservable() {
+			return humanReadableByteCount(getMemoryFXObservable(), true);
 		}
 	}
 

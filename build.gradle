@@ -1,0 +1,41 @@
+project(':PropertiesProfiling') {
+    apply plugin: 'java'
+    apply plugin: 'application'
+
+    mainClassName = 'com.dlsc.profiling.EmployeeProfiling'
+    applicationDefaultJvmArgs = ["-Xms2048m", "-Xmx2048m"]
+
+    sourceSets {
+        main {
+            java.srcDirs = ['src']
+            resources.srcDirs = []
+        }
+        test {
+            java.srcDirs = []
+            resources.srcDirs = []
+        }
+    }
+
+    repositories {
+        mavenLocal()
+        jcenter()
+    }
+
+    dependencies {
+        compileOnly 'org.codehaus.griffon.plugins:griffon-core-lombok-compile:0.1.0-SNAPSHOT'
+    }
+
+    task delombok {
+        def srcJava = "src"
+        def srcDelomboked = "$buildDir/generated-src/delombok"
+        inputs.files sourceSets.main.allJava
+        inputs.files sourceSets.main.output
+        outputs.dir file(srcDelomboked)
+
+        doLast {
+            ant.taskdef(name: 'delombok', classname: 'lombok.delombok.ant.Tasks$Delombok', classpath: configurations.compileOnly.asPath)
+            ant.delombok(from: srcJava, to: srcDelomboked, classpath: configurations.compile + sourceSets.main.output)
+        }
+    }
+
+}
