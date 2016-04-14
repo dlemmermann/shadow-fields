@@ -23,6 +23,7 @@ public class EmployeeProfiling extends Application {
         testClasses.put(Employee.class, (name, powers) -> new Employee(name, powers));
         testClasses.put(EmployeePropertyAccessor.class, (name, powers) -> new EmployeePropertyAccessor(name, powers));
         testClasses.put(EmployeeShadowFields.class, (name, powers) -> new EmployeeShadowFields(name, powers));
+        testClasses.put(EmployeeObjectFields.class, (name, powers) -> new EmployeeObjectFields(name, powers));
         testClasses.put(EmployeeFXObservable.class, (name, powers) -> new EmployeeFXObservable(name, powers));
     }
 
