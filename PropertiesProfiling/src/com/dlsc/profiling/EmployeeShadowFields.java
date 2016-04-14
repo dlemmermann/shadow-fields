@@ -17,64 +17,76 @@ public class EmployeeShadowFields {
         setPowers(powers);
     }
 
-    private Object name;
+    private String _name;
+
+    private StringProperty name;
 
     public final String getName() {
-    	return name instanceof StringProperty ? ((StringProperty)name).get() : (String) name;
+    	return name == null ? _name : name.get();
     }
 
     public final void setName(String name) {
-    	if (this.name instanceof StringProperty)
-            ((StringProperty)this.name).set(name);
-        else
-            this.name = name;
+    	if (this.name == null) {
+    		_name = name;
+    	} else {
+    		this.name.set(name);
+    	}
     }
 
     public final StringProperty nameProperty() {
-    	if (!(name instanceof StringProperty)) {
-    		name = new SimpleStringProperty(this, "name", (String)name);
+    	if (name == null) {
+    		name = new SimpleStringProperty(this, "name", _name);
     	}
-    	return (StringProperty)name;
+
+    	return name;
     }
 
-    private Object powers;
+    private String _powers;
+
+    private StringProperty powers;
 
     public String getPowers() {
-        return powers instanceof StringProperty ? ((StringProperty)powers).get() : (String) powers;
-    }
-
-    public final void setPowers(String powers) {
-        if (this.powers instanceof StringProperty)
-            ((StringProperty)this.powers).set(powers);
-        else
-            this.powers = powers;
+    	return powers == null ? _powers : powers.get();
     }
 
     public final StringProperty powersProperty() {
-        if (!(powers instanceof StringProperty)) {
-    		powers = new SimpleStringProperty(this, "powers", (String)powers);
+    	if (powers == null) {
+    		powers = new SimpleStringProperty(this, "powers", _powers);
     	}
-    	return (StringProperty)powers;
+
+    	return powers;
     }
 
-    private Object supervisor;
-
-    public EmployeeShadowFields getSupervisor() {
-        return supervisor instanceof ObjectProperty ? ((ObjectProperty<EmployeeShadowFields>)supervisor).get() : (EmployeeShadowFields) supervisor;
+    public final void setPowers(String powers) {
+    	if (this.powers == null) {
+    		_powers = powers;
+    	} else {
+    		this.powers.set(powers);
+    	}
     }
 
-    public final void setSupervisor(EmployeeShadowFields supervisor) {
-        if (this.supervisor instanceof ObjectProperty)
-            ((ObjectProperty<EmployeeShadowFields>)this.supervisor).set(supervisor);
-        else
-            this.supervisor = supervisor;
+    private EmployeeShadowFields _supervisor;
+
+    private ObjectProperty<EmployeeShadowFields> supervisor;
+
+    public final EmployeeShadowFields getSupervisor() {
+    	return supervisor == null ? _supervisor : supervisor.get();
     }
 
     public final ObjectProperty<EmployeeShadowFields> supervisorProperty() {
-        if (!(supervisor instanceof ObjectProperty)) {
-    		supervisor = new SimpleObjectProperty<EmployeeShadowFields>(this, "supervisor", (EmployeeShadowFields) supervisor);
+    	if (supervisor == null) {
+    		supervisor = new SimpleObjectProperty<>(this, "supervisor", _supervisor);
     	}
-    	return (ObjectProperty<EmployeeShadowFields>)supervisor;
+
+    	return supervisor;
+    }
+
+    public final void setSupervisor(EmployeeShadowFields supervisor) {
+    	if (this.supervisor == null) {
+    		_supervisor = supervisor;
+    	} else {
+    		this.supervisor.set(supervisor);
+    	}
     }
 
     private ObservableList<EmployeeShadowFields> minions;
