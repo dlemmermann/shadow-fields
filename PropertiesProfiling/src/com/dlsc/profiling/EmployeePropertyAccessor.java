@@ -1,10 +1,7 @@
 package com.dlsc.profiling;
 
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.collections.ObservableList;
 
 import java.util.ArrayList;
@@ -55,7 +52,7 @@ import static com.dlsc.profiling.PropertyAccessors.registerFields;
  *
  * Created by Carl Dea
  */
-public class EmployeePropertyAccessor implements PropertyAccessors {
+public class EmployeePropertyAccessor implements EmployeeIF<EmployeePropertyAccessor>, PropertyAccessors {
 
     private Object name;
     private Object powers;
@@ -114,8 +111,8 @@ public class EmployeePropertyAccessor implements PropertyAccessors {
         setValue(FIELDS.supervisor, supervisor);
     }
 
-    public final List<EmployeePropertyAccessor> getMinions() {
-        return getValues(FIELDS.minions, new ArrayList<>());
+    public final ObservableList<EmployeePropertyAccessor> getMinions() {
+        return refObservables(FIELDS.minions);
     }
 
     public final ObservableList<EmployeePropertyAccessor> minionsObservables() {

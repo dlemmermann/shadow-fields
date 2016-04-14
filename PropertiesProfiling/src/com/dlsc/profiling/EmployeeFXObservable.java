@@ -12,7 +12,7 @@ import javafx.collections.ObservableList;
 
 import griffon.transform.FXObservable;
 
-public class EmployeeFXObservable {
+public class EmployeeFXObservable implements EmployeeIF<EmployeeFXObservable> {
 
     @FXObservable
     private String name;

@@ -10,7 +10,7 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-public class EmployeeShadowFields {
+public class EmployeeShadowFields implements EmployeeIF<EmployeeShadowFields> {
 
     public EmployeeShadowFields(String name, String powers) {
         setName(name);
