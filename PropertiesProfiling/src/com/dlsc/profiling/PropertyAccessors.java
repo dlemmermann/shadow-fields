@@ -30,35 +30,26 @@ import java.util.Map;
  * The following example is what a user of the API will need to do:
  * <pre>
  *     <code>
+ . The rest of the class definition
  *        // STEP 1: Implement the interface PropertyAccessors
  *     public class MyClass implements PropertyAccessors {
  *
  *        // STEP 2: Declare your private member (to hold either a native or property type)
  *        private Object myBrain;
  *
- *        // STEP 3: Choose the fields to be considered properties. Name entries to be the same as member variables!
- *        enum FIELDS {
- *           myBrain
- *        }
- *
- *        // STEP 4: Register the fields to be shadowed.
- *        static {
- *           registerFields(MyClass.class, FIELDS.values());
- *        }
- *
- *        // STEP 5: Use the PropertyAccessor interface API for getters/setters/property methods.
+ *        // STEP 3: Use the PropertyAccessor interface API for getters/setters/property methods.
  *        public final String getMyBrain() {
- *           return getValue(FIELDS.myBrain, "");
+ *           return getValue(myBrain);
  *        }
  *        public final void setMyBrain((String myBrain) {
- *           setValue(FIELDS.myBrain, myBrain);
+ *           this.myBrain = setValue(this.myBrain, myBrain);
  *        }
  *        public final StringProperty myBrainProperty() {
- *           return refProperty(FIELDS.myBrain, SimpleStringProperty.class, String.class);
+ *           myBrain = refProperty(myBrain, SimpleStringProperty.class);
+ *           return cast(myBrain);
  *        }
  *
  *        // .. The rest of the class definition
- *     }
  *     </code>
  * </pre>
  *
@@ -105,11 +96,11 @@ public interface PropertyAccessors {
 
     /**
      *
-     * @param name
-     * @param p
-     * @param propertyClass
-     * @param <T>
-     * @return
+     * @param name Name of the property
+     * @param p potential callers attribute value (raw or a property)
+     * @param propertyClass The concreate JavaFX property class such as SimpleStringProperty.class
+     * @param <T> The Property object for the caller to set as.
+     * @return The return of the property object.
      */
     default <T> T refProperty(String name, Object p, Class propertyClass) {
         Property prop = null;
