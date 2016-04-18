@@ -1,20 +1,24 @@
 package com.dlsc.profiling;
 
 
-import javafx.beans.property.Property;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The PropertyAccessors interface provides default methods to support the similar
  * capability of the shadow fields pattern. To save memory object values don't have to be
  * wrapped into a Property object when using getters and setters, however when
  * calling property type methods values will be wrapped into a property object.
+ *
+ * #Version 1 no attributes, but a map to hold values. It was expensive.
+ * #Version 2 Centralized a map to hold values.
+ * #Version 3 used to use reflection to index fields and dynamically create property types.
+ * #Version 4 now removes the need of reflection. Also, added a convenience
  *
  * This API allows the developer to easily specify fields without having boilerplate code
  * when creating shadow fields to save memory. Any fields considered to
@@ -61,147 +65,111 @@ import java.util.List;
  * Created by Carl Dea
  */
 public interface PropertyAccessors {
-
-    List<Field> fieldList = new ArrayList<>();
-    List<Constructor> constructorList = new ArrayList<>();
-    Field enumOrdinalField = getEnumOrdinalField();
-
-    Class[] constructorTypesA = new Class[]{Object.class, String.class};
-    Class[] constructorTypesB = new Class[]{Object.class, String.class, null};
-
-    static Field getEnumOrdinalField() {
-        try {
-            return Enum.class.getDeclaredField("ordinal");
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-    static void registerFields(Class clazz, Enum[] enumFields) {
-        //synchronized (fieldList) {
-        enumOrdinalField.setAccessible(true);
-
-        for(Enum enumField:enumFields) {
-                try {
-                    Field field = clazz.getDeclaredField(enumField.toString());
-                    field.setAccessible(true);
-                    enumOrdinalField.set(enumField, fieldList.size() );
-                    fieldList.add(field);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                constructorList.add(null);
-            }
-        enumOrdinalField.setAccessible(false);
-
-        //}
+    /**
+     * Convenience function to reduce boiler plate of casting objects to return an object.
+     * @param object The object to cast.
+     * @param <T> The return object of the type T.
+     * @return Object of type T
+     */
+    default <T> T cast(Object object) {
+        return (T) object;
     }
 
-    default Object getFieldValue(Enum name) {
-        try {
-            Field field = fieldList.get(name.ordinal());
-            Object p = field.get(this);
-            return p;
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    default void setFieldValue(Enum name, Object value) {
-        try {
-            Field field = fieldList.get(name.ordinal());
-            field.set(this, value);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
-    }
-    default <T> T getValue(Enum name, Object defaultVal) {
-        Object p = null;
-        try {
-            Field field = fieldList.get(name.ordinal());
-            p = field.get(this);
-            p = p==null ? defaultVal : p;
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
+    /**
+     * Returns a value from a property object or the raw type.
+     * @param p The potential property object.
+     * @param <T> The raw value is returned.
+     * @return Object value raw type.
+     */
+    default <T> T getValue(Object p) {
         return (T) ((p instanceof Property) ? ((Property) p).getValue(): p);
     }
 
-    default void setValue(Enum name, Object value) {
-        Object p = getFieldValue(name);
+    /**
+     * This will return a Property or Raw object value for the caller to set.
+     * @param p The potential property object.
+     * @param value The raw value to set. If underlying object is a property the raw value will be set into.
+     * @param <T> The value type either raw or a property.
+     * @return A property or raw object is returned for the caller to set. Important that the caller sets
+     * the private member to the return value.
+     */
+    default <T> T setValue(Object p, Object value) {
         if (p instanceof Property) {
             ((Property)p).setValue(value);
+            return (T) p;
         } else {
-            setFieldValue(name, value);
+            return (T) value;
         }
+
     }
-    default <T> T refProperty(Enum name, Class propClass, Class rawValType) {
-        Object p = getFieldValue(name);
+
+    /**
+     *
+     * @param name
+     * @param p
+     * @param propertyClass
+     * @param <T>
+     * @return
+     */
+    default <T> T refProperty(String name, Object p, Class propertyClass) {
         Property prop = null;
-        try {
-            if (p == null) {
-
-                Constructor<Property> propConstr = constructorList.get(name.ordinal());
-                if (propConstr == null) {
-                    propConstr = propClass.getDeclaredConstructor(constructorTypesA);
-                    constructorList.set(name.ordinal(), propConstr);
-                }
-                prop = propConstr.newInstance(this, name.name());
-            } else if (rawValType.isInstance(p)) {
-                constructorTypesB[2] = rawValType;
-                Constructor<Property> propConstr = constructorList.get(name.ordinal());
-                if (propConstr == null) {
-                    propConstr = propClass.getDeclaredConstructor(constructorTypesB);
-                    constructorList.set(name.ordinal(), propConstr);
-                }
-
-                prop = propConstr.newInstance(this, name.name(), p);
+        if (p == null || !(p instanceof Property)) {
+            // create a property object
+            if (SimpleBooleanProperty.class == propertyClass) {
+                prop = new SimpleBooleanProperty(this, name);
+            } else if (SimpleDoubleProperty.class == propertyClass) {
+                prop = new SimpleDoubleProperty(this, name);
+            } else if (SimpleFloatProperty.class == propertyClass) {
+                prop = new SimpleFloatProperty(this, name);
+            } else if (SimpleIntegerProperty.class == propertyClass) {
+                prop = new SimpleIntegerProperty(this, name);
+            } else if (SimpleLongProperty.class == propertyClass) {
+                prop = new SimpleLongProperty(this, name);
+            } else if (SimpleObjectProperty.class == propertyClass) {
+                prop = new SimpleObjectProperty(this, name);
+            } else if (SimpleStringProperty.class == propertyClass) {
+                prop = new SimpleStringProperty(this, name);
             } else {
-                prop = (Property) p;
+                throw new RuntimeException("Unsupported concrete Property class " + propertyClass.getName());
             }
-            setFieldValue(name, prop);
-        } catch (Exception e) {
-            e.printStackTrace();
+        }
+
+        if (! (p instanceof Property)) {
+            prop.setValue(p);
+        } else {
+            prop = (Property) p;
         }
         return (T) prop;
     }
 
-    default <T> List<T> getValues(Enum name, List<T> defaultValue) {
-        Object p, o = getFieldValue(name);
-        p = o;
-        o = o==null ? defaultValue : o;
-        if (!o.equals(p)) {
-            setFieldValue(name, o);
-        }
-        return  (List<T>) o;
-    }
+// @TODO update API to support Simple Lists, Maps and Sets
+//                SimpleListProperty
+//                SimpleMapProperty
+//                SimpleSetProperty
+//
 
-    default <T> void setValues(Enum name, List<T> newList) {
-
-        Object list = getFieldValue(name);
-        if (list == null || (list instanceof ArrayList)) {
-            setFieldValue(name, newList);
-        } else {
-            // Should the list be totally replaced? below clears and adds all items
-            ObservableList<T> observableList = (ObservableList<T>) list;
-            observableList.clear();
-            observableList.addAll(newList);
-        }
-    }
-
-    default <T> ObservableList<T> refObservables(Enum name) {
-
-        List list = (List) getFieldValue(name);
+    default <T> ObservableList<T> refObservables(List list) {
 
         if (list == null) {
             list = FXCollections.observableArrayList();
-            setFieldValue(name, list);
         } else if (! (list instanceof ObservableList)) {
             list = FXCollections.observableArrayList(list);
-            setFieldValue(name, list);
         }
 
         return (ObservableList<T>) list;
     }
+
+    default <K,V> ObservableMap<K, V> refObservableMap(Map<K,V> map) {
+
+        if (map == null) {
+            return FXCollections.observableHashMap();
+        } else if (! (map instanceof ObservableMap)) {
+            ObservableMap<K, V> newMap = FXCollections.observableHashMap();
+            newMap.putAll(map);
+            return newMap;
+        }
+
+        return (ObservableMap<K, V>) map;
+    }
+
 }
