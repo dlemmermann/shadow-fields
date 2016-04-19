@@ -9,6 +9,8 @@ import javafx.collections.ObservableList;
 
 import java.util.List;
 
+import static com.dlsc.profiling.PropertyAccessors.*;
+
 /**
  * A hybrid domain and model object using the PropertyAccessors interface
  * similar Shadow Fields pattern to save memory. Any fields considered to
@@ -45,7 +47,7 @@ import java.util.List;
  *
  * Created by Carl Dea
  */
-public class EmployeePropertyAccessor implements PropertyAccessors {
+public class EmployeePropertyAccessor {
 
     private Object name;
     private Object powers;
@@ -60,7 +62,7 @@ public class EmployeePropertyAccessor implements PropertyAccessors {
     public final String getName() {return getValue(name); }
     public final void setName(String name) { this.name = setValue(this.name, name); }
     public final StringProperty nameProperty() {
-        name = refProperty("name", name, SimpleStringProperty.class);
+        name = refProperty(this, "name", name, SimpleStringProperty.class);
         return cast(name);
     }
 
@@ -69,7 +71,7 @@ public class EmployeePropertyAccessor implements PropertyAccessors {
     }
 
     public final StringProperty powersProperty() {
-        powers = refProperty("powers", powers, SimpleStringProperty.class);
+        powers = refProperty(this, "powers", powers, SimpleStringProperty.class);
         return cast(powers);
     }
 
@@ -82,7 +84,7 @@ public class EmployeePropertyAccessor implements PropertyAccessors {
     }
 
     public final ObjectProperty<EmployeePropertyAccessor> supervisorProperty() {
-        supervisor = refProperty("supervisor", supervisor, SimpleObjectProperty.class);
+        supervisor = refProperty(this, "supervisor", supervisor, SimpleObjectProperty.class);
         return cast(supervisor);
     }
 
@@ -90,17 +92,12 @@ public class EmployeePropertyAccessor implements PropertyAccessors {
         this.supervisor = setValue(this.supervisor, supervisor);
     }
 
-    public final List<EmployeePropertyAccessor> getMinions() {
-        return minions;
-    }
-
-    public final ObservableList<EmployeePropertyAccessor> minionsObservables() {
+    public final ObservableList<EmployeePropertyAccessor> getMinions() {
         minions = refObservables(minions);
         return cast(minions);
     }
 
     public final void setMinions(List<EmployeePropertyAccessor> minions) {
-        this.minions = minions;
+        getMinions().setAll(minions);
     }
-
 }
