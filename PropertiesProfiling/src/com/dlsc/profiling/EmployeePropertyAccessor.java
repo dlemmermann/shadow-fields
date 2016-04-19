@@ -93,7 +93,7 @@ public class EmployeePropertyAccessor {
     }
 
     public final ObservableList<EmployeePropertyAccessor> getMinions() {
-        minions = refObservables(minions);
+        minions = refObservableList(minions);
         return cast(minions);
     }
 

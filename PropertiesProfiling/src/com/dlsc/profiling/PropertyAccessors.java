@@ -168,7 +168,7 @@ public class PropertyAccessors {
 //                SimpleSetProperty
 //
 
-    public static <T> ObservableList<T> refObservables(List list) {
+    public static <T> ObservableList<T> refObservableList(List list) {
 
         if (list == null) {
             list = FXCollections.observableArrayList();
@@ -191,7 +191,7 @@ public class PropertyAccessors {
 
         return cast(map);
     }
-    public static <E> ObservableSet<E> refObservableMap(Set<E> set) {
+    public static <E> ObservableSet<E> refObservableSet(Set<E> set) {
 
         if (set == null) {
             return FXCollections.observableSet(new HashSet<>());
