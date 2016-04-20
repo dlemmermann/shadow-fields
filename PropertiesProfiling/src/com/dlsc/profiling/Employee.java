@@ -9,7 +9,7 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-public class Employee {
+public class Employee implements EmployeeIF<Employee> {
 
 	public Employee(String name, String powers) {
 		setName(name);

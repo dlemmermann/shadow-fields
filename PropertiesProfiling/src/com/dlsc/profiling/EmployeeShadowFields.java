@@ -10,7 +10,7 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-public class EmployeeShadowFields {
+public class EmployeeShadowFields implements EmployeeIF<EmployeeShadowFields> {
 
     public EmployeeShadowFields(String name, String powers) {
         setName(name);
@@ -36,6 +36,7 @@ public class EmployeeShadowFields {
     public final StringProperty nameProperty() {
     	if (name == null) {
     		name = new SimpleStringProperty(this, "name", _name);
+			_name = null;
     	}
 
     	return name;
@@ -52,6 +53,7 @@ public class EmployeeShadowFields {
     public final StringProperty powersProperty() {
     	if (powers == null) {
     		powers = new SimpleStringProperty(this, "powers", _powers);
+			_powers = null;
     	}
 
     	return powers;
@@ -76,6 +78,7 @@ public class EmployeeShadowFields {
     public final ObjectProperty<EmployeeShadowFields> supervisorProperty() {
     	if (supervisor == null) {
     		supervisor = new SimpleObjectProperty<>(this, "supervisor", _supervisor);
+			_supervisor = null;
     	}
 
     	return supervisor;

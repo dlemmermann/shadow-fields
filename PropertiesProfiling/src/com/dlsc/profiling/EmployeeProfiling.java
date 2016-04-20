@@ -1,6 +1,7 @@
 package com.dlsc.profiling;
 
 import javafx.application.Application;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -12,16 +13,23 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.function.BiFunction;
 
 public class EmployeeProfiling extends Application {
 
-	final List<Employee> employees = new LinkedList<>();
-	final List<EmployeePropertyAccessor> employeePropertyAccessors = new LinkedList<>();
-	final List<EmployeeShadowFields> employeesShadowFields = new LinkedList<>();
+    private final Map<Class<? extends EmployeeIF>, BiFunction<String, String, EmployeeIF>> testClasses = new LinkedHashMap<>();
+    {
+        testClasses.put(Employee.class, (name, powers) -> new Employee(name, powers));
+        testClasses.put(EmployeePropertyAccessor.class, (name, powers) -> new EmployeePropertyAccessor(name, powers));
+        testClasses.put(EmployeeShadowFields.class, (name, powers) -> new EmployeeShadowFields(name, powers));
+        testClasses.put(EmployeeObjectFields.class, (name, powers) -> new EmployeeObjectFields(name, powers));
+        testClasses.put(EmployeeFXObservable.class, (name, powers) -> new EmployeeFXObservable(name, powers));
+    }
 
-	private Button button;
+	private List<EmployeeIF> employees;
+
+    private Button button;
 	private TableView<TestResult> resultsTable;
 	private CheckBox propertiesCheckBox;
 
@@ -57,41 +65,26 @@ public class EmployeeProfiling extends Application {
 	private TableView<TestResult> createTableView() {
 		TableView<TestResult> tableView = new TableView<EmployeeProfiling.TestResult>();
 
-		TableColumn<TestResult, Integer> countColumn = new TableColumn<>("Objects");
-		countColumn.setCellValueFactory(new PropertyValueFactory<>("count"));
-		countColumn.setPrefWidth(80);
-		tableView.getColumns().add(countColumn);
+        TableColumn<TestResult, Integer> countColumn = new TableColumn<>("Objects");
+        countColumn.setCellValueFactory(new PropertyValueFactory<>("count"));
+        countColumn.setPrefWidth(80);
+        tableView.getColumns().add(countColumn);
 
-		TableColumn<TestResult, Long> durationAColumn = new TableColumn<>("Time Standard");
-		durationAColumn.setCellValueFactory(new PropertyValueFactory<>("durationStandard"));
-		durationAColumn.setPrefWidth(110);
-		tableView.getColumns().add(durationAColumn);
+        for (Class<? extends EmployeeIF> type : testClasses.keySet()) {
+            TableColumn<TestResult, String> groupingColumn = new TableColumn<>(type.getSimpleName());
+            groupingColumn.setPrefWidth(220);
+            tableView.getColumns().add(groupingColumn);
 
-		TableColumn<TestResult, Long> memoryStandard = new TableColumn<>("Mem Standard");
-		memoryStandard.setCellValueFactory(new PropertyValueFactory<>("niceMemoryStandard"));
-		memoryStandard.setPrefWidth(110);
-		tableView.getColumns().add(memoryStandard);
+            TableColumn<TestResult, Long> durationColumn = new TableColumn<>("Time");
+            durationColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<Long>(param.getValue().getDuration(type)));
+            durationColumn.setPrefWidth(110);
+            groupingColumn.getColumns().add(durationColumn);
 
-		TableColumn<TestResult, Long> durationBColumn = new TableColumn<>("Time Accessor");
-		durationBColumn.setCellValueFactory(new PropertyValueFactory<>("durationPropertyAccessor"));
-		durationBColumn.setPrefWidth(110);
-		tableView.getColumns().add(durationBColumn);
-
-		TableColumn<TestResult, Long> memoryAccessor = new TableColumn<>("Mem Accessor");
-		memoryAccessor.setCellValueFactory(new PropertyValueFactory<>("niceMemoryPropertyAccessor"));
-		memoryAccessor.setPrefWidth(110);
-		tableView.getColumns().add(memoryAccessor);
-
-		TableColumn<TestResult, Long> memoryAColumn = new TableColumn<>("Time Shadow");
-		memoryAColumn.setCellValueFactory(new PropertyValueFactory<>("durationShadowFields"));
-		memoryAColumn.setPrefWidth(110);
-		tableView.getColumns().add(memoryAColumn);
-
-
-		TableColumn<TestResult, Long> memoryShadow = new TableColumn<>("Mem Shadow");
-		memoryShadow.setCellValueFactory(new PropertyValueFactory<>("niceMemoryShadowFields"));
-		memoryShadow.setPrefWidth(110);
-		tableView.getColumns().add(memoryShadow);
+            TableColumn<TestResult, String> memColumn = new TableColumn<>("Mem");
+            memColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<String>(param.getValue().getNiceMemory(type)));
+            memColumn.setPrefWidth(110);
+            groupingColumn.getColumns().add(memColumn);
+        }
 
 		BorderPane.setMargin(tableView, new Insets(10));
 		return tableView;
@@ -119,96 +112,39 @@ public class EmployeeProfiling extends Application {
 		result.setCount(count);
 		result.setAccessProperties(accessProperties);
 
-		clearLists();
-		testStandard(count, accessProperties, result);
-
-		clearLists();
-		testPropertyAccessor(count, accessProperties, result);
-
-		clearLists();
-		testShadowFields(count, accessProperties, result);
+        for (Map.Entry<Class<? extends EmployeeIF>, BiFunction<String, String, EmployeeIF>> entry : testClasses.entrySet()) {
+			employees = null;
+            test(count, accessProperties, result, entry.getKey(), entry.getValue());
+			employees = null;
+		}
 
 		return result;
 	}
 
-	private void clearLists() {
-		employees.clear();
-		employeePropertyAccessors.clear();
-		employeesShadowFields.clear();
-		System.gc();
-	}
+    private void test(int count, boolean accessProperties, TestResult result, Class<? extends EmployeeIF> employeeType, BiFunction<String, String, EmployeeIF> employeeCreator) {
+        System.gc();
+        long usedSpace = getUsedSpace();
+        long time = System.currentTimeMillis();
 
-	private void testShadowFields(int count, boolean accessProperties, TestResult result) {
-		long usedSpace = getUsedSpace();
-		long time = System.currentTimeMillis();
+        employees = new ArrayList<>(count);
 
-		for (int i = 0; i < count; i++) {
-			EmployeeShadowFields employee = new EmployeeShadowFields("name", "powers");
-			if (accessProperties) {
-				employee.nameProperty();
-				employee.powersProperty();
-				employee.supervisorProperty();
-				employee.getMinions();
-			}
-			employeesShadowFields.add(employee);
-		}
+        for (int i = 0; i < count; i++) {
+            EmployeeIF employee = employeeCreator.apply("name", "powers");
+            if (accessProperties) {
+                employee.nameProperty();
+                employee.powersProperty();
+                employee.supervisorProperty();
+                employee.getMinions();
+            }
+            employees.add(employee);
+        }
 
-		result.setDurationShadowFields(System.currentTimeMillis() - time);
+        result.setDuration(employeeType, System.currentTimeMillis() - time);
 
-		// measure memory
-		System.gc();
-		long diff = getUsedSpace() - usedSpace;
-		result.setMemoryShadowFields(diff);
-		employeesShadowFields.clear();
-	}
-
-	private void testPropertyAccessor(int count, boolean accessProperties, TestResult result) {
-		long usedSpace = getUsedSpace();
-		long time = System.currentTimeMillis();
-
-		for (int i = 0; i < count; i++) {
-			EmployeePropertyAccessor employeePropertyAccessor = new EmployeePropertyAccessor("name", "powers");
-			if (accessProperties) {
-				employeePropertyAccessor.nameProperty();
-				employeePropertyAccessor.powersProperty();
-				employeePropertyAccessor.supervisorProperty();
-				employeePropertyAccessor.getMinions();
-			}
-			employeePropertyAccessors.add(employeePropertyAccessor);
-		}
-
-		result.setDurationPropertyAccessor(System.currentTimeMillis() - time);
-
-		// measure memory
-		System.gc();
-		long diff = getUsedSpace() - usedSpace;
-		result.setMemoryPropertyAccessor(diff);
-		employeePropertyAccessors.clear();
-	}
-
-	private void testStandard(int count, boolean accessProperties, TestResult result) {
-		long usedSpace = getUsedSpace();
-		long time = System.currentTimeMillis();
-
-		for (int i = 0; i < count; i++) {
-			Employee employee = new Employee("name", "powers");
-			if (accessProperties) {
-				employee.nameProperty();
-				employee.powersProperty();
-				employee.supervisorProperty();
-				employee.getMinions();
-			}
-			employees.add(employee);
-		}
-
-		result.setDurationStandard(System.currentTimeMillis() - time);
-
-		// measure memory
-		System.gc();
-		long diff = getUsedSpace() - usedSpace;
-		result.setMemoryStandard(diff);
-		employees.clear();
-	}
+        // measure memory
+        System.gc();
+        result.setMemory(employeeType, getUsedSpace() - usedSpace);
+    }
 
 	private long getUsedSpace() {
 		return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
@@ -216,16 +152,11 @@ public class EmployeeProfiling extends Application {
 
 	public static class TestResult {
 
-		int count;
-		boolean accessProperties;
+        int count;
+        boolean accessProperties;
 
-		long durationStandard;
-		long durationPropertyAccessor;
-		long durationShadowFields;
-
-		long memoryStandard;
-		long memoryPropertyAccessor;
-		long memoryShadowFields;
+        Map<Class<? extends EmployeeIF>, Long> duration = new HashMap<>();
+        Map<Class<? extends EmployeeIF>, Long> memory = new HashMap<>();
 
 		public final int getCount() {
 			return count;
@@ -243,65 +174,26 @@ public class EmployeeProfiling extends Application {
 			this.accessProperties = accessProperties;
 		}
 
-		public final long getDurationStandard() {
-			return durationStandard;
+		public final long getDuration(Class<? extends EmployeeIF> employeeType) {
+			return duration.get(employeeType).longValue();
 		}
 
-		public final void setDurationStandard(long duration) {
-			this.durationStandard = duration;
+		public final void setDuration(Class<? extends EmployeeIF> employeeType, long duration) {
+			this.duration.put(employeeType, Long.valueOf(duration));
 		}
 
-		public final long getDurationPropertyAccessor() {
-			return durationPropertyAccessor;
+		public final long getMemory(Class<? extends EmployeeIF> employeeType) {
+			return memory.get(employeeType).longValue();
 		}
 
-		public final void setDurationPropertyAccessor(long duration) {
-			this.durationPropertyAccessor = duration;
+		public final void setMemory(Class<? extends EmployeeIF> employeeType, long memory) {
+			this.memory.put(employeeType, Long.valueOf(memory));
 		}
 
-		public final long getDurationShadowFields() {
-			return durationShadowFields;
+		public final String getNiceMemory(Class<? extends EmployeeIF> employeeType) {
+			return humanReadableByteCount(getMemory(employeeType), true);
 		}
 
-		public final void setDurationShadowFields(long duration) {
-			this.durationShadowFields = duration;
-		}
-
-		public final long getMemoryStandard() {
-			return memoryStandard;
-		}
-
-		public final void setMemoryStandard(long memoryStandard) {
-			this.memoryStandard = memoryStandard;
-		}
-
-		public final long getMemoryPropertyAccessor() {
-			return memoryPropertyAccessor;
-		}
-
-		public final void setMemoryPropertyAccessor(long memoryPropertyAccessor) {
-			this.memoryPropertyAccessor = memoryPropertyAccessor;
-		}
-
-		public final long getMemoryShadowFields() {
-			return memoryShadowFields;
-		}
-
-		public final void setMemoryShadowFields(long memoryShadowFields) {
-			this.memoryShadowFields = memoryShadowFields;
-		}
-
-		public final String getNiceMemoryStandard() {
-			return humanReadableByteCount(getMemoryStandard(), true);
-		}
-
-		public final String getNiceMemoryPropertyAccessor() {
-			return humanReadableByteCount(getMemoryPropertyAccessor(), true);
-		}
-
-		public final String getNiceMemoryShadowFields() {
-			return humanReadableByteCount(getMemoryShadowFields(), true);
-		}
 	}
 
     public static String humanReadableByteCount(final long bytes, boolean si) {

@@ -47,7 +47,7 @@ import static com.dlsc.profiling.PropertyAccessors.*;
  *
  * Created by Carl Dea
  */
-public class EmployeePropertyAccessor {
+public class EmployeePropertyAccessor implements EmployeeIF<EmployeePropertyAccessor> {
 
     private Object name;
     private Object powers;
