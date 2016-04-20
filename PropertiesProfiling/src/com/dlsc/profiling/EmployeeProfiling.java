@@ -172,7 +172,7 @@ public class EmployeeProfiling extends Application {
 				employeePropertyAccessor.nameProperty();
 				employeePropertyAccessor.powersProperty();
 				employeePropertyAccessor.supervisorProperty();
-				employeePropertyAccessor.minionsObservables();
+				employeePropertyAccessor.getMinions();
 			}
 			employeePropertyAccessors.add(employeePropertyAccessor);
 		}

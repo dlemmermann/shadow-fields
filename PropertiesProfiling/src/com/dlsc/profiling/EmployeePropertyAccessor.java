@@ -7,9 +7,9 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 
-import java.util.ArrayList;
 import java.util.List;
-import static com.dlsc.profiling.PropertyAccessors.registerFields;
+
+import static com.dlsc.profiling.PropertyAccessors.*;
 
 /**
  * A hybrid domain and model object using the PropertyAccessors interface
@@ -27,25 +27,16 @@ import static com.dlsc.profiling.PropertyAccessors.registerFields;
  *        // STEP 2: Declare your private member (to hold either a native or property type)
  *        private Object myBrain;
  *
- *        // STEP 3: Choose the fields to be considered properties. Name entries to be the same as member variables!
- *        enum FIELDS {
- *           myBrain
- *        }
- *
- *        // STEP 4: Register the fields to be shadowed.
- *        static {
- *           registerFields(MyClass.class, FIELDS.values());
- *        }
- *
- *        // STEP 5: Use the PropertyAccessor interface API for getters/setters/property methods.
+ *        // STEP 3: Use the PropertyAccessor interface API for getters/setters/property methods.
  *        public final String getMyBrain() {
- *           return getValue(FIELDS.myBrain, "");
+ *           return getValue(myBrain);
  *        }
  *        public final void setMyBrain((String myBrain) {
- *           setValue(FIELDS.myBrain, myBrain);
+ *           this.myBrain = setValue(this.myBrain, myBrain);
  *        }
  *        public final StringProperty myBrainProperty() {
- *           return refProperty(FIELDS.myBrain, SimpleStringProperty.class, String.class);
+ *           myBrain = refProperty(myBrain, SimpleStringProperty.class);
+ *           return cast(myBrain);
  *        }
  *
  *        // .. The rest of the class definition
@@ -53,77 +44,60 @@ import static com.dlsc.profiling.PropertyAccessors.registerFields;
  *     </code>
  * </pre>
  *
+ *
  * Created by Carl Dea
  */
-public class EmployeePropertyAccessor implements PropertyAccessors {
+public class EmployeePropertyAccessor {
 
     private Object name;
     private Object powers;
     private Object supervisor;
-    private Object minions;
-
-    enum FIELDS {
-        name,
-        powers,
-        supervisor,
-        minions
-    }
-
-    static {
-        // register fields one time.
-        // (Warning: enum's ordinal value is reassigned and index number)
-        registerFields(EmployeePropertyAccessor.class, FIELDS.values());
-    }
+    private List<EmployeePropertyAccessor> minions;
 
     public EmployeePropertyAccessor(String name, String powers) {
         setName(name);
         setPowers(powers);
     }
 
-    public final String getName() {
-        return getValue(FIELDS.name, "");
-    }
-    public final void setName(String name) {
-        setValue(FIELDS.name, name);
-    }
+    public final String getName() {return getValue(name); }
+    public final void setName(String name) { this.name = setValue(this.name, name); }
     public final StringProperty nameProperty() {
-        return refProperty(FIELDS.name, SimpleStringProperty.class, String.class);
+        name = refProperty(this, "name", name, SimpleStringProperty.class);
+        return cast(name);
     }
 
     public String getPowers() {
-        return getValue(FIELDS.powers, "");
+        return getValue(powers);
     }
 
     public final StringProperty powersProperty() {
-        return refProperty(FIELDS.powers, SimpleStringProperty.class, String.class);
+        powers = refProperty(this, "powers", powers, SimpleStringProperty.class);
+        return cast(powers);
     }
 
     public final void setPowers(String powers) {
-        setValue(FIELDS.powers, powers);
+        this.powers = setValue(this.powers, powers);
     }
 
     public final EmployeePropertyAccessor getSupervisor() {
-        return getValue(FIELDS.supervisor, null);
+        return getValue(supervisor);
     }
 
     public final ObjectProperty<EmployeePropertyAccessor> supervisorProperty() {
-        return refProperty(FIELDS.supervisor, SimpleObjectProperty.class, EmployeePropertyAccessor.class);
+        supervisor = refProperty(this, "supervisor", supervisor, SimpleObjectProperty.class);
+        return cast(supervisor);
     }
 
     public final void setSupervisor(EmployeePropertyAccessor supervisor) {
-        setValue(FIELDS.supervisor, supervisor);
+        this.supervisor = setValue(this.supervisor, supervisor);
     }
 
-    public final List<EmployeePropertyAccessor> getMinions() {
-        return getValues(FIELDS.minions, new ArrayList<>());
-    }
-
-    public final ObservableList<EmployeePropertyAccessor> minionsObservables() {
-        return refObservables(FIELDS.minions);
+    public final ObservableList<EmployeePropertyAccessor> getMinions() {
+        minions = refObservableList(minions);
+        return cast(minions);
     }
 
     public final void setMinions(List<EmployeePropertyAccessor> minions) {
-        setValues(FIELDS.minions, minions);
+        getMinions().setAll(minions);
     }
-
 }
