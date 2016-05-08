@@ -12,17 +12,12 @@ import javafx.collections.ObservableList;
 
 import griffon.transform.FXObservable;
 
+@FXObservable
 public class EmployeeFXObservable implements EmployeeIF<EmployeeFXObservable> {
 
-    @FXObservable
     private String name;
-
-    @FXObservable
     private String powers;
-
-    @FXObservable
     private EmployeeFXObservable supervisor;
-
     private ObservableList<EmployeeFXObservable> minions;
 
     public EmployeeFXObservable(String name, String powers) {
@@ -30,15 +25,4 @@ public class EmployeeFXObservable implements EmployeeIF<EmployeeFXObservable> {
         setPowers(powers);
     }
 
-    public final ObservableList<EmployeeFXObservable> getMinions() {
-        if (minions == null) {
-            minions = FXCollections.observableArrayList();
-        }
-
-        return minions;
-    }
-
-    public final void setMinions(List<EmployeeFXObservable> minions) {
-        getMinions().setAll(minions);
-    }
 }
